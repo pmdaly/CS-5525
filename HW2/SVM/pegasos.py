@@ -47,7 +47,7 @@ class SVM:
         return np.mean(y_pred == y)
 
 def main():
-    Data = np.genfromtxt('../MNIST-13.csv', delimiter=',')
+    Data = np.genfromtxt('../data/MNIST-13.csv', delimiter=',')
     X, y = Data[:,1:], Data[:,0]
     y = np.array([-1 if i == 1 else 1 for i in y])
 
