@@ -35,12 +35,20 @@ class SVM:
         self.fit_time = time.time() - self.fit_time
 
     def _sample(self, X, y, w):
+        # TODO(pmdaly): can't figure out the correct sampling method
+        #   this will have to do for now
+        #
         #k_1 = self.k//2
         #A_t = np.random.choice(np.where(y==1)[0], k_1, replace=False)
         #A_t = np.append(A_t, np.random.choice(
         #    np.where(y==-1)[0], self.k - k_1, replace=False))
         #A_t.sort() # not sure if needed
-        A_t = np.random.choice(y, self.k, replace=False)
+        #A_t = np.random.choice(len(y), self.k, replace=False)
+        y_0, y_1 = np.where(y==0)[0], np.where(y==1)[0]
+        np.random.shuffle(y_0)
+        np.random.shuffle(y_1)
+        k_1 = self.k//2
+        A_t = np.append(y_0[:k_1], y_1[:(self.k-k_1)])
         A_t_nzl = A_t[np.where(y[A_t]*X[A_t].dot(w) < 1)[0]]
         return A_t_nzl
 
@@ -62,19 +70,20 @@ def main():
     X, y = Data[:,1:], Data[:,0]
     y = np.array([-1 if i == 1 else 1 for i in y])
 
-    svm = SVM(k=1,calc_loss=True)
-    svm.fit(X,y)
+    for k_v in [1,10,50,100,500,1000,2000]:
+        svm = SVM(k=k_v,calc_loss=True)
+        svm.fit(X,y)
 
-    plt.figure()
-    plt.xlabel('Iteration')
-    plt.ylabel('Loss')
-    plt.plot(svm.training_loss)
-    plt.savefig('../plots/loss_vs_ite_{}.pdf'.format(
-        strftime("%Y.%m.%d_%H.%M.%S", localtime()),
-        format='pdf'))
-    plt.close('all')
-    print('Loss vs Iteration saved to ../plots')
-    print('Time: {}'.format(svm.fit_time))
+        plt.figure()
+        plt.xlabel('Iteration')
+        plt.ylabel('Loss')
+        plt.plot(svm.training_loss)
+        plt.savefig('../plots/loss_vs_ite_{}.pdf'.format(
+            strftime("%Y.%m.%d_%H.%M.%S", localtime()),
+            format='pdf'))
+        plt.close('all')
+        print('Loss vs Iteration saved to ../plots')
+        print('Time: {}'.format(svm.fit_time))
 
 if __name__ == "__main__":
     main()
