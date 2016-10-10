@@ -14,8 +14,7 @@ class SVM:
 
     def fit(self, X, y):
         self.fit_time = time.time()
-        w = np.random.randn(X.shape[1])
-        w /= 2*norm(w)/np.sqrt(self.lam)
+        w = np.zeros(X.shape[1])
         if self.calc_loss:
             loss = []
         k_tot = 0
@@ -23,7 +22,7 @@ class SVM:
             A_t_nzl = self._sample(X,y,w)
             nu_t = 1 / (self.lam*t) if t != 0 else 1 / self.lam
             w = (1-nu_t*self.lam)*w + nu_t/self.k * X[A_t_nzl].T.dot(y[A_t_nzl])
-            w = min(1, self.lam**(-0.5)/(norm(w)+1e-10))*w
+            w = min(1, self.lam**(-0.5)/(norm(w)+1e-5))*w
             if self.calc_loss:
                 if t%10 == 0:
                     loss.append(self._loss(X,y,w))
@@ -36,12 +35,12 @@ class SVM:
         self.fit_time = time.time() - self.fit_time
 
     def _sample(self, X, y, w):
-        k_1 = self.k//2
-        k_n1 = self.k - k_1
-        A_t = np.random.choice(np.where(y==1)[0], k_1, replace=False)
-        A_t = np.append(A_t, np.random.choice(
-            np.where(y==-1)[0], k_n1, replace=False))
-        A_t.sort() # not sure if needed
+        #k_1 = self.k//2
+        #A_t = np.random.choice(np.where(y==1)[0], k_1, replace=False)
+        #A_t = np.append(A_t, np.random.choice(
+        #    np.where(y==-1)[0], self.k - k_1, replace=False))
+        #A_t.sort() # not sure if needed
+        A_t = np.random.choice(y, self.k, replace=False)
         A_t_nzl = A_t[np.where(y[A_t]*X[A_t].dot(w) < 1)[0]]
         return A_t_nzl
 
@@ -63,7 +62,7 @@ def main():
     X, y = Data[:,1:], Data[:,0]
     y = np.array([-1 if i == 1 else 1 for i in y])
 
-    svm = SVM(k=1000,calc_loss=True)
+    svm = SVM(k=1,calc_loss=True)
     svm.fit(X,y)
 
     plt.figure()
