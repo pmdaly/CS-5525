@@ -4,7 +4,7 @@ import numpy as np
 from numpy.linalg import norm
 import time
 
-class SVM:
+class Pegasos:
 
     def __init__(self, T=2000, k=10, lam=1e-4, calc_loss=False):
         self.lam = lam
@@ -70,20 +70,20 @@ def main():
     X, y = Data[:,1:], Data[:,0]
     y = np.array([-1 if i == 1 else 1 for i in y])
 
+    k_v = 50
     for k_v in [1,10,50,100,500,1000,2000]:
-        svm = SVM(k=k_v,calc_loss=True)
-        svm.fit(X,y)
-
+        pgs = Pegasos(k=k_v,calc_loss=True)
+        pgs.fit(X,y)
         plt.figure()
         plt.xlabel('Iteration')
         plt.ylabel('Loss')
-        plt.plot(svm.training_loss)
+        plt.plot(pgs.training_loss)
         plt.savefig('../plots/loss_vs_ite_{}.pdf'.format(
             strftime("%Y.%m.%d_%H.%M.%S", localtime()),
             format='pdf'))
         plt.close('all')
         print('Loss vs Iteration saved to ../plots')
-        print('Time: {}'.format(svm.fit_time))
+        print('Time: {}'.format(pgs.fit_time))
 
 if __name__ == "__main__":
     main()
