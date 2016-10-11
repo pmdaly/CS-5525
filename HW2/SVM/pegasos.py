@@ -78,7 +78,7 @@ def main():
         plt.xlabel('Iteration')
         plt.ylabel('Loss')
         plt.plot(pgs.training_loss)
-        plt.savefig('../plots/loss_vs_ite_{}.pdf'.format(
+        plt.savefig('../plots/pegasos/loss_vs_ite_{}.pdf'.format(
             strftime("%Y.%m.%d_%H.%M.%S", localtime()),
             format='pdf'))
         plt.close('all')
