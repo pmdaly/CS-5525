@@ -82,7 +82,7 @@ def main():
             strftime("%Y.%m.%d_%H.%M.%S", localtime()),
             format='pdf'))
         plt.close('all')
-        print('Loss vs Iteration saved to ../plots')
+        print('Loss vs Iteration saved to ../plots/pegasos')
         print('Time: {}'.format(pgs.fit_time))
 
 if __name__ == "__main__":
