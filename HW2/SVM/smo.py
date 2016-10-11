@@ -1,4 +1,5 @@
 import numpy as np
+import ipdb
 import time
 
 class SMO:
@@ -13,16 +14,16 @@ class SMO:
     def fit(self, X, y):
 
         self.fit_time = time.time()
-        alpha = np.zeros(X.shape[1])
-        Q = X.T.dot(X)
-        grad = np.empty(X.shape[1])
+        alpha = np.zeros(X.shape[0])
+        Q = X.dot(X.T)
+        grad = np.empty(X.shape[0])
 
         i = j = ite = 0
         while (i != -1) and (j != -1) and (ite < self.max_ite):
 
             i,j  = self._wss(Q,y,grad,alpha)
             B = [i,j]
-            N = [l for l in range(X.shape[1]) if l not in B]
+            N = [l for l in range(X.shape[0]) if l not in B]
             alpha_b, alpha_n = alpha[B], alpha[N]
 
             if self.calc_loss:
@@ -37,18 +38,15 @@ class SMO:
                 alpha[i] += delta
                 alpha[j] += delta
 
-                if diff > 0:
-                    if alpha[j] < 0: # Region 3
-                        alpha[i], alpha[j] = diff, 0
+                if alpha[i] < 0:
+                    alpha[i] = 0
                 else:
-                    if alpha[i] < 0: # Region 4
-                        alpha[i], alpha[j] = 0, -diff
-                if diff > (C[i] - C[j]):
-                    if alpha[i] > C[i]: # Region 1
-                        alpha[i], alpha[j] = C_i, C_i - diff
+                    alpha[i] = min(alpha[i], self.C)
+                if alpha[j] < 0:
+                    alpha[j] = 0
                 else:
-                    if alpha[j] > C[j]: # Region 2
-                        alpha[i], alpha[j] = C[j] + diff, C[j]
+                    alpha[j] = min(alpha[j], self.C)
+
             else:
                 alpha[i] += y[i]*self._b(grad, y, i, j) / self._a(Q, i, j)
 
@@ -71,17 +69,17 @@ class SMO:
         I_up, I_low = self._update_i_up_low(y, alpha)
 
         # search for i
-        i, i_max_f = -1, np.infty
+        i, i_max_f = -1, -np.infty
         for i_up in I_up:
             yt_grad = -y[i_up]*grad[i_up]
             if yt_grad > i_max_f:
                 i, i_max_f = i_up, yt_grad
 
         # search for j
-        j, j_min_f = -1, -np.infty
+        j, j_min_f = -1, np.infty
         for j_up in I_low:
             ba_ij = -self._b(grad,y,i,j_up)**2 / self._a(Q,i,j_up)
-            if ba_ij < j_min_f and -y[j]*grad[j] < i_max_f:
+            if (ba_ij < j_min_f) and (-y[j]*grad[j] < i_max_f):
                 j, j_min_f = j_up, ba_ij
         return i, j
 
@@ -113,7 +111,6 @@ class SMO:
 
 def main():
     # debugging
-    #import ipdb
     #ipdb.set_trace()
 
     import matplotlib.pyplot as plt
