@@ -1,10 +1,15 @@
+#!/usr/bin/env python3
+
 import numpy as np
-import ipdb
 import time
+
+# debugging
+#import ipdb
+#ipdb.set_trace()
 
 class SMO:
 
-    def __init__(self, C=10, Tau=1e-5, max_ite = 1000, calc_loss=False):
+    def __init__(self, C=5, Tau=1e-5, max_ite = 1000, calc_loss=False):
         self.C = C
         self.Tau = Tau
         self.max_ite = max_ite
@@ -16,7 +21,7 @@ class SMO:
         self.fit_time = time.time()
         alpha = np.zeros(X.shape[0])
         Q = X.dot(X.T)
-        grad = np.empty(X.shape[0])
+        grad = np.zeros(X.shape[0])
 
         i = j = ite = 0
         while (i != -1) and (j != -1) and (ite < self.max_ite):
@@ -49,13 +54,14 @@ class SMO:
 
             else:
                 alpha[i] += y[i]*self._b(grad, y, i, j) / self._a(Q, i, j)
+                alpha[j] -= y[j]*self._b(grad, y, i, j) / self._a(Q, i, j)
 
-            for i in range(len(grad)):
-                grad[i] += Q[i, B].dot(alpha[B] - alpha_b)
+            grad += Q[:, B].dot(alpha[B])
 
             if self.calc_loss:
                 #if ite%10 == 0:
                 loss.append(0.5*alpha.dot(Q).dot(alpha) + sum(alpha))
+                print(loss[-1])
             ite += 1
 
         if self.calc_loss:
@@ -81,6 +87,8 @@ class SMO:
             ba_ij = -self._b(grad,y,i,j_up)**2 / self._a(Q,i,j_up)
             if (ba_ij < j_min_f) and (-y[j]*grad[j] < i_max_f):
                 j, j_min_f = j_up, ba_ij
+        if j == -1:
+            j = np.random.choice(I_low)
         return i, j
 
 
@@ -89,7 +97,7 @@ class SMO:
 
 
     def _b(self, grad, y, t, s):
-        return -y[t]*grad[t] + y[s]*grad[s]
+        return max(0, -y[t]*grad[t] + y[s]*grad[s])
 
 
     def _update_i_up_low(self, y, alpha):
@@ -110,8 +118,6 @@ class SMO:
 
 
 def main():
-    # debugging
-    #ipdb.set_trace()
 
     import matplotlib.pyplot as plt
     from time import localtime, strftime
