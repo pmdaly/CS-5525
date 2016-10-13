@@ -27,6 +27,7 @@ class SMO:
         while (i != -1) and (j != -1) and (ite < self.max_ite):
 
             i,j  = self._wss(Q,y,grad,alpha)
+            print(i,j)
             B = [i,j]
             N = [l for l in range(X.shape[0]) if l not in B]
             alpha_b, alpha_n = alpha[B], alpha[N]
@@ -56,12 +57,11 @@ class SMO:
                 alpha[i] += y[i]*self._b(grad, y, i, j) / self._a(Q, i, j)
                 alpha[j] -= y[j]*self._b(grad, y, i, j) / self._a(Q, i, j)
 
-            grad += Q[:, B].dot(alpha[B])
+            grad += Q[:, B].dot(alpha[B] - alpha_b)
 
             if self.calc_loss:
-                #if ite%10 == 0:
-                loss.append(0.5*alpha.dot(Q).dot(alpha) + sum(alpha))
-                print(loss[-1])
+                if ite%10 == 0:
+                    loss.append(0.5*alpha.dot(Q).dot(alpha) - sum(alpha))
             ite += 1
 
         if self.calc_loss:
@@ -87,8 +87,7 @@ class SMO:
             ba_ij = -self._b(grad,y,i,j_up)**2 / self._a(Q,i,j_up)
             if (ba_ij < j_min_f) and (-y[j]*grad[j] < i_max_f):
                 j, j_min_f = j_up, ba_ij
-        if j == -1:
-            j = np.random.choice(I_low)
+
         return i, j
 
 
@@ -97,7 +96,7 @@ class SMO:
 
 
     def _b(self, grad, y, t, s):
-        return max(0, -y[t]*grad[t] + y[s]*grad[s])
+        return max(self.Tau, -y[t]*grad[t] + y[s]*grad[s])
 
 
     def _update_i_up_low(self, y, alpha):
@@ -138,6 +137,9 @@ def main():
     plt.close('all')
     print('Loss vs Iteration saved to ../plots/smo/')
     print('Time: {}'.format(smo.fit_time))
+    print('Final objective function val: {}\n'.format(
+        round(smo.training_loss[-1], 5)))
+
 
 if __name__ == '__main__':
     main()

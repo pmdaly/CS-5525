@@ -6,31 +6,31 @@ import time
 
 class Pegasos:
 
-    def __init__(self, T=2000, k=10, lam=1e-4, calc_loss=False):
+    def __init__(self, k=10, lam=1e-4, calc_loss=False):
         self.lam = lam
-        self.T = T
         self.k = k
         self.calc_loss = calc_loss
 
     def fit(self, X, y):
+        self.T = 100*X.shape[0]
         self.fit_time = time.time()
         w = np.zeros(X.shape[1])
         if self.calc_loss:
-            loss = []
+            loss = [self._loss(X,y,w)]
         k_tot = 0
         for t in range(self.T):
             A_t_nzl = self._sample(X,y,w)
             nu_t = 1 / (self.lam*t) if t != 0 else 1 / self.lam
             w = (1-nu_t*self.lam)*w + nu_t/self.k * X[A_t_nzl].T.dot(y[A_t_nzl])
             w = min(1, self.lam**(-0.5)/(norm(w)+1e-5))*w
+            k_tot += len(A_t_nzl)
             if self.calc_loss:
                 if t%10 == 0:
                     loss.append(self._loss(X,y,w))
-            k_tot += t*len(A_t_nzl)
-            if k_tot > 100*X.shape[0]:
+            if k_tot > self.T or abs(loss[-1] - loss[-2]) < 1e-4:
                 break
         if self.calc_loss:
-            self.training_loss = loss
+            self.training_loss = loss[1:]
         self.w = w
         self.fit_time = time.time() - self.fit_time
 
@@ -79,11 +79,15 @@ def main():
         plt.ylabel('Loss')
         plt.plot(pgs.training_loss)
         plt.savefig('../plots/pegasos/loss_vs_ite_{}.pdf'.format(
-            strftime("%Y.%m.%d_%H.%M.%S", localtime()),
+            strftime("%Y.%m.%d_%H.%M.%S", localtime()) + '__K_{}'.format(k_v),
             format='pdf'))
         plt.close('all')
         print('Loss vs Iteration saved to ../plots/pegasos')
-        print('Time: {}'.format(pgs.fit_time))
+        print('Time: {} in {} iterations'.format(round(pgs.fit_time, 2),
+            10*len(pgs.training_loss)))
+        print('Final objective function val w/ K={}: {}\n'.format(
+            pgs.k, round(pgs.training_loss[-1], 5)))
+
 
 if __name__ == "__main__":
     main()
