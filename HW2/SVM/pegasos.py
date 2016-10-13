@@ -6,13 +6,14 @@ import time
 
 class Pegasos:
 
-    def __init__(self, k=10, lam=1e-4, calc_loss=False):
+    def __init__(self, T=1000, k=10, lam=1e-4, calc_loss=False):
+        self.T = T
         self.lam = lam
         self.k = k
         self.calc_loss = calc_loss
 
     def fit(self, X, y):
-        self.T = 100*X.shape[0]
+        X /= X.sum(axis=1)[:,np.newaxis]
         self.fit_time = time.time()
         w = np.zeros(X.shape[1])
         if self.calc_loss:
@@ -27,7 +28,7 @@ class Pegasos:
             if self.calc_loss:
                 if t%10 == 0:
                     loss.append(self._loss(X,y,w))
-            if k_tot > self.T or abs(loss[-1] - loss[-2]) < 1e-4:
+            if k_tot > 100*X.shape[0]:# or abs(loss[-1] - loss[-2]) < 1e-4:
                 break
         if self.calc_loss:
             self.training_loss = loss[1:]
@@ -77,7 +78,7 @@ def main():
         plt.figure()
         plt.xlabel('Iteration')
         plt.ylabel('Loss')
-        plt.plot(pgs.training_loss)
+        plt.plot(pgs.training_loss[1:])
         plt.savefig('../plots/pegasos/loss_vs_ite_{}.pdf'.format(
             strftime("%Y.%m.%d_%H.%M.%S", localtime()) + '__K_{}'.format(k_v),
             format='pdf'))

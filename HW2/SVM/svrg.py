@@ -43,8 +43,8 @@ class SVRG:
             w_bar = w
 
             if self.calc_loss:
-                #if k_tot%10 == 0:
-                loss.append(self._loss(X,y,w))
+                if k_tot%10 == 0:
+                    loss.append(self._loss(X,y,w))
             if k_tot > 100*X.shape[0]:
                 break
         if self.calc_loss:
@@ -88,7 +88,7 @@ def main():
     X, y = Data[:,1:], Data[:,0]
     y = np.array([-1 if i == 1 else 1 for i in y])
 
-    for M_v in [0,1,10,100,500,1000,2000]:
+    for M_v in [1,10,100,500,1000,2000]:
         svrg = SVRG(M=M_v, calc_loss=True)
         svrg.fit(X,y)
         plt.figure()
@@ -100,7 +100,8 @@ def main():
             format='pdf'))
         plt.close('all')
         print('Loss vs Iteration saved to ../plots/svrg')
-        print('Time: {}'.format(round(svrg.fit_time,2)))
+        print('Time: {} in {} iterations'.format(
+            round(svrg.fit_time,2), len(svrg.training_loss)*10))
         print('Final objective function val w/ M={}: {}\n'.format(
             svrg.M, round(svrg.training_loss[-1], 5)))
 
