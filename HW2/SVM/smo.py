@@ -4,12 +4,12 @@ import numpy as np
 import time
 
 # debugging
-#import ipdb
+import ipdb
 #ipdb.set_trace()
 
 class SMO:
 
-    def __init__(self, C=5, Tau=1e-5, max_ite = 1000, calc_loss=False):
+    def __init__(self, C=5, Tau=1e-5, max_ite = 500, calc_loss=False):
         self.C = C
         self.Tau = Tau
         self.max_ite = max_ite
@@ -21,47 +21,44 @@ class SMO:
         self.fit_time = time.time()
         alpha = np.zeros(X.shape[0])
         Q = X.dot(X.T)
+        Q /= Q.sum(axis=1)[:, np.newaxis]
         grad = np.zeros(X.shape[0])
+
+        if self.calc_loss:
+            loss = []
 
         i = j = ite = 0
         while (i != -1) and (j != -1) and (ite < self.max_ite):
 
             i,j  = self._wss(Q,y,grad,alpha)
-            print(i,j)
+
             B = [i,j]
-            N = [l for l in range(X.shape[0]) if l not in B]
-            alpha_b, alpha_n = alpha[B], alpha[N]
+            #N = [l for l in range(X.shape[0]) if l not in B]
+            #alpha_b, alpha_n = alpha[B], alpha[N]
+            alpha_b = alpha[B]
 
-            if self.calc_loss:
-                loss = []
+            yi_ba_ij = y[i]*self._b(grad,y,i,j)**2 / self._a(Q,i,j)
+            alpha[i] += yi_ba_ij
+            alpha[j] -= yi_ba_ij
 
-            if y[i] != y[j]:
+            #if y[i] != y[j]:
 
-                quad_coef = max(0, Q[i,i] + Q[j,j] + 2*Q[i,j])
-                delta = -(grad[i]-grad[j])/quad_coef
-                diff = alpha[i] - alpha[j]
-
-                alpha[i] += delta
-                alpha[j] += delta
-
-                if alpha[i] < 0:
-                    alpha[i] = 0
-                else:
-                    alpha[i] = min(alpha[i], self.C)
-                if alpha[j] < 0:
-                    alpha[j] = 0
-                else:
-                    alpha[j] = min(alpha[j], self.C)
-
+            if alpha[i] < 0:
+                alpha[i] = 0
             else:
-                alpha[i] += y[i]*self._b(grad, y, i, j) / self._a(Q, i, j)
-                alpha[j] -= y[j]*self._b(grad, y, i, j) / self._a(Q, i, j)
+                alpha[i] = min(alpha[i], self.C)
+            if alpha[j] < 0:
+                alpha[j] = 0
+            else:
+                alpha[j] = min(alpha[j], self.C)
+
 
             grad += Q[:, B].dot(alpha[B] - alpha_b)
 
+
             if self.calc_loss:
                 if ite%10 == 0:
-                    loss.append(0.5*alpha.dot(Q).dot(alpha) - sum(alpha))
+                    loss.append(self._loss(Q,alpha))
             ite += 1
 
         if self.calc_loss:
@@ -85,7 +82,7 @@ class SMO:
         j, j_min_f = -1, np.infty
         for j_up in I_low:
             ba_ij = -self._b(grad,y,i,j_up)**2 / self._a(Q,i,j_up)
-            if (ba_ij < j_min_f) and (-y[j]*grad[j] < i_max_f):
+            if (ba_ij < j_min_f) and (-y[j]*grad[j] < i_max_f + self.Tau):
                 j, j_min_f = j_up, ba_ij
 
         return i, j
@@ -110,6 +107,9 @@ class SMO:
                 or (at > 0      and y[t] ==  1)]
 
         return I_up, I_low
+
+    def _loss(self, Q, alpha):
+        return 0.5 * alpha.dot(Q).dot(alpha) - sum(alpha)
 
 
     def score(self, X, y):
@@ -136,7 +136,8 @@ def main():
         format='pdf'))
     plt.close('all')
     print('Loss vs Iteration saved to ../plots/smo/')
-    print('Time: {}'.format(smo.fit_time))
+    print('Time: {} in {} iterations'.format(smo.fit_time,
+        len(smo.training_loss)))
     print('Final objective function val: {}\n'.format(
         round(smo.training_loss[-1], 5)))
 
