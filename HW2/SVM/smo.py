@@ -8,20 +8,68 @@ import ipdb
 #ipdb.set_trace()
 
 class SMO:
+    """SMO SVM classifier.
 
+    This class implements the SMO-type decomposition popularized in the LIBSVM
+    package. Currently only 2 classes are supported. Will be extended to
+    multiclass using one vs all strategy at a later time.
+
+    Parameters
+    ----------
+    C : int, default: 5
+        Box constraints on the solution.
+
+    Tau : float, default: 1e-5
+        Error tolerance.
+
+    max_ite : int, default: 500
+        Maximum iterations to search for a solution.
+
+    calc_loss : bool, default: False
+        Specifies if the loss function is to be computed.
+
+    Attributes
+    ----------
+    C,Tau,max_ite,calc_loss as listed above
+
+    alpha : array, shape (n_samples)
+        Dual optimal variable.
+
+    fit_time : float
+        Total elapsed time of fitting y to dataset X in fit method.
+
+    training_loss : (optional) array, shape(max ite or tot # of gradients computed)
+        Loss function evaluated every 10th iteration.
+    """
     def __init__(self, C=5, Tau=1e-5, max_ite = 500, calc_loss=False):
         self.C = C
         self.Tau = Tau
         self.max_ite = max_ite
         self.calc_loss = calc_loss
 
-
     def fit(self, X, y):
+        """Fit the model according to given training data. X's features are
+        normalized to encourage stability.
 
+        Parameters
+        ----------
+        X : np.array, shape (n_samples, n_features)
+            Training vector.
+
+        y : np.array, shape (n_samples,)
+            Target vector relative to X.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
         self.fit_time = time.time()
         alpha = np.zeros(X.shape[0])
+
         Q = X.dot(X.T)
         Q /= Q.sum(axis=1)[:, np.newaxis]
+
         grad = np.zeros(X.shape[0])
 
         if self.calc_loss:
@@ -63,11 +111,31 @@ class SMO:
 
         if self.calc_loss:
             self.training_loss = loss
+
         self.fit_time = time.time() - self.fit_time
         self.alpha = alpha
 
 
     def _wss(self, Q, y, grad, alpha):
+        """Active set selection. Search for a pair that approximately minizes
+        the function value -b_it**2 / a_it.
+
+        Parameters
+        ----------
+        Q : np.array, shape (n_samples, n_samples)
+            Kernel matrix where each element is x[i,:].dot(x[i,:].T)
+
+        y : np.array, shape(n_samples,)
+            Target vector relative to X.
+
+        alpha : np.array, shape(n_samples)
+            Dual optimal variable.
+
+        Returns
+        ------
+        (i, j) : tuple of ints
+            Indices that approximiately minimize the function value.
+        """
 
         I_up, I_low = self._update_i_up_low(y, alpha)
 
@@ -97,7 +165,6 @@ class SMO:
 
 
     def _update_i_up_low(self, y, alpha):
-
         I_up  = [t for t,at in enumerate(alpha)
                 if (at < self.C and y[t] ==  1)
                 or (at > 0      and y[t] == -1)]
@@ -127,6 +194,7 @@ def main():
 
     smo = SMO(calc_loss=True)
     smo.fit(X,y)
+
     plt.figure()
     plt.xlabel('Iteration')
     plt.ylabel('Loss')
