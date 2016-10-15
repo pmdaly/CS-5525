@@ -14,23 +14,27 @@ from smo import SMO
 class ArgumentError(Exception):
     pass
 
-
 def gen_results(X, y, numruns, loss=False):
     results = []
+    if loss:
+        plt.figure()
+        plt.xlabel('Iteration (every 10th saved)')
+        plt.ylabel('Loss')
+        plt.title(
+                'Objective function progression across {} runs'.format(numruns))
     for i in range(numruns):
         smo = SMO(calc_loss=loss)
         smo.fit(X,y)
         results.append(smo.fit_time)
         if loss:
-            plt.figure()
-            plt.xlabel('Iteration (every 10th saved)')
-            plt.ylabel('Loss')
-            plt.plot(smo.training_loss)
-            plt.savefig('plots/smo/loss_vs_ite_{}.pdf'.format(
-                strftime("%Y.%m.%d_%H.%M.%S", localtime()),
-                format='pdf'))
-            plt.close('all')
+            plt.plot(smo.training_loss, label='Run {}'.format(i))
         print('Run {} time: {}'.format(i, round(results[-1],3)))
+    if loss:
+        plt.legend(loc='upper right')
+        plt.savefig('plots/smo/loss_vs_ite_{}.pdf'.format(
+            strftime("%Y.%m.%d_%H.%M.%S", localtime()),
+            format='pdf'))
+        plt.close('all')
     return results
 
 

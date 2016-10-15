@@ -14,24 +14,49 @@ from svrg import SVRG
 class ArgumentError(Exception):
     pass
 
+def gen_results_for_hw(X,y):
+    for m in [1,20,200,1000,2000]:
+        results = []
+        plt.figure()
+        plt.xlabel('Iteration (every 10th saved)')
+        plt.ylabel('Loss')
+        plt.title('SVRG ojective function progression for m = {}'.format(m))
+        for i in range(5):
+            svrg = SVRG(M=m, calc_loss=True)
+            svrg.fit(X,y)
+            results.append(svrg.fit_time)
+            plt.plot(svrg.training_loss, label='Run {}'.format(i))
+            print('Run {} time: {}'.format(i, round(results[-1],3)))
+        plt.legend(loc='upper right')
+        plt.savefig('writeup/plots/svrg/m{}.pdf'.format(m), format='pdf')
+        plt.close('all')
+        print('Avg: {}s, Std: {}s'.format(
+            round(np.mean(results),3), round(np.std(results),3)))
+
+
 
 def gen_results(X, y, m, numruns, loss=False):
     results = []
+    if loss:
+        plt.figure()
+        plt.xlabel('Iteration (every 10th saved)')
+        plt.ylabel('Loss')
+        plt.title(
+                'Objective function progression across {} runs'.format(numruns))
     for i in range(numruns):
         svrg = SVRG(M=m, calc_loss=loss)
         svrg.fit(X,y)
         results.append(svrg.fit_time)
         if loss:
-            plt.figure()
-            plt.xlabel('Iteration (every 10th saved)')
-            plt.ylabel('Loss')
-            plt.plot(svrg.training_loss)
-            plt.savefig('plots/svrg/loss_vs_ite_{}.pdf'.format(
-                strftime("%Y.%m.%d_%H.%M.%S", localtime()) +
-                '__m_{}'.format(m),
-                format='pdf'))
-            plt.close('all')
+            plt.plot(svrg.training_loss, label='Run {}'.format(i))
         print('Run {} time: {}'.format(i, round(results[-1],3)))
+    if loss:
+        plt.legend(loc='upper right')
+        plt.savefig('plots/svrg/loss_vs_ite_{}.pdf'.format(
+            strftime("%Y.%m.%d_%H.%M.%S", localtime()) +
+            '__m_{}'.format(m),
+            format='pdf'))
+        plt.close('all')
     return results
 
 

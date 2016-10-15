@@ -14,24 +14,47 @@ from pegasos import Pegasos
 class ArgumentError(Exception):
     pass
 
+def gen_results_for_hw(X,y):
+    for K in [1,20,200,1000,2000]:
+        results = []
+        plt.figure()
+        plt.xlabel('Iteration (every 10th saved)')
+        plt.ylabel('Loss')
+        plt.title('Pegasos ojective function progression for k = {}'.format(K))
+        for i in range(5):
+            pgs = Pegasos(k=K, calc_loss=True)
+            pgs.fit(X,y)
+            results.append(pgs.fit_time)
+            plt.plot(pgs.training_loss, label='Run {}'.format(i))
+            print('Run {} time: {}'.format(i, round(results[-1],3)))
+        plt.legend(loc='upper right')
+        plt.savefig('writeup/plots/pegasos/k{}.pdf'.format(K),format='pdf')
+        plt.close('all')
+        print('Avg: {}s, Std: {}s'.format(
+            round(np.mean(results),3), round(np.std(results),3)))
+
 
 def gen_results(X, y, K, numruns, loss=False):
     results = []
+    if loss:
+        plt.figure()
+        plt.xlabel('Iteration (every 10th saved)')
+        plt.ylabel('Loss')
+        plt.title('Objective function progression across {} runs'.format(numruns))
     for i in range(numruns):
         pgs = Pegasos(k=K, calc_loss=loss)
         pgs.fit(X,y)
         results.append(pgs.fit_time)
         if loss:
-            plt.figure()
-            plt.xlabel('Iteration (every 10th saved)')
-            plt.ylabel('Loss')
-            plt.plot(pgs.training_loss)
-            plt.savefig('plots/pegasos/loss_vs_ite_{}.pdf'.format(
-                strftime("%Y.%m.%d_%H.%M.%S", localtime()) +
-                '__k_{}'.format(K),
-                format='pdf'))
-            plt.close('all')
+            plt.plot(pgs.training_loss, label='Run {}'.format(i))
         print('Run {} time: {}'.format(i, round(results[-1],3)))
+    if loss:
+        plt.legend(loc='upper right')
+        plt.savefig('plots/pegasos/loss_vs_ite_{}.pdf'.format(
+            strftime("%Y.%m.%d_%H.%M.%S", localtime()) +
+            '__k_{}'.format(K),
+            format='pdf'))
+        plt.close('all')
     return results
 
 
