@@ -107,6 +107,10 @@ class SMO:
             if self.calc_loss:
                 if ite%10 == 0:
                     loss.append(self._loss(Q,alpha))
+                if ite >= 20:
+                    if abs(loss[-2] - loss[-1]) < 1e-4:
+                        break
+
             ite += 1
 
         if self.calc_loss:

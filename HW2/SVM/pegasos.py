@@ -85,7 +85,7 @@ class Pegasos:
                 if t%10 == 0:
                     loss.append(self._loss(X,y,w))
 
-            if k_tot > 100*X.shape[0] or abs(loss[-1] - loss[-2]) < 1e-4:
+            if k_tot > 100*X.shape[0]:#or abs(loss[-1] - loss[-2]) < 1e-4:
                 break
 
         if self.calc_loss:
