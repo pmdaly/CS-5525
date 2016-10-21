@@ -1,11 +1,8 @@
 CS 5525 - Machine Learning
 ===
 
-Patrick Daly
-279-5539
-dalyx097@umn.edu
-
-- python3 was used
+- this repo houses all of the Machine Learning algorithms we've implemented for
+  various homeworks
 - all files can generate loss plots if "loss" is added as a final argument
 - the runner files below aren't commented much but the actual souce code is
 
